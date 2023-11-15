@@ -1,13 +1,12 @@
 <template>
-  <div class="container list ">
+  <div class="container list">
     <v-card class="mx-auto" tile dark>
       <v-card-title>Tasks</v-card-title>
 
       <v-data-table
         :headers="headers"
         :items="tasks"
-        disable-pagination
-        :hide-default-footer="true"
+        items-per-page="10"
       >
       </v-data-table>
     </v-card>

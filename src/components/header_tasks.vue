@@ -16,7 +16,8 @@
       </v-btn>
       
       <v-autocomplete 
-        class="mt-4"
+        v-if="isTasksRoute"
+        class="mt-4 mx-5"
         v-model="titleSearch"
         :items="tasksAutocomplete"
         item-text="title"
@@ -115,7 +116,6 @@ export default {
     currentUser() {
       return this.$store.state.auth.user
     },
-
     // controllo se utente = admin
     isAdmin() {
       if (this.currentUser && this.currentUser.roles) {
@@ -129,7 +129,11 @@ export default {
         return this.currentUser.roles.includes('ROLE_USER')
       }
       return false
-    }
+    },
+    // Verifica se si è sulla route indicata
+    isTasksRoute() {
+      return this.$route.path === '/tasksAdmin' || this.$route.path === '/tasksUser'
+    },
   },
 }
 </script>
