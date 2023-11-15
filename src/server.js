@@ -2,8 +2,6 @@ const express = require("express")
 const bodyParser = require("body-parser")
 const cors = require("cors")
 const taskRoutes = require("./routes/tasks.routes")
-const authRoutes = require('./routes/auth.routes');
-const userRoutes = require('./routes/user.routes');
 const db = require("./models")
 
 db.mongoose
