@@ -17,14 +17,21 @@
         <v-data-table
           :headers="headers"
           :items="tasks"
-          items-per-page="10"
-        >
-          <template v-slot:[`item.actions`]="{ item }">
-            <v-icon large class="mr-4" color="warning" @click="showEditDialog(item.id)">mdi-pencil-circle</v-icon>
-            <v-icon large color="error" @click="showDeleteDialog(item.id)">mdi-delete-circle</v-icon>
-
-          </template>
+          items-per-page="10">
           
+          <template v-slot:item="{ item }">
+            <tr @click="showDetailsDialog(item.id)" class="text-left">
+              <td>{{ item.title }}</td>
+              <td>{{ item.note }}</td>
+              <td>{{ item.creationDate }}</td>
+              <td>{{ item.lastEdit }}</td>
+              <td>
+                <v-icon large class="mr-3" color="warning" @click.stop="showEditDialog(item.id)">mdi-pencil-circle</v-icon>
+                <v-icon large color="error" @click.stop="showDeleteDialog(item.id)">mdi-delete-circle</v-icon>
+              </td>
+            </tr>
+          </template>
+
         </v-data-table>
 
         <v-dialog v-model="deleteDialog" max-width="400px">
@@ -35,8 +42,8 @@
                   </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="success" @click="confirmDelete()">Yes</v-btn>
-                    <v-btn color="error" @click="closeDialog()">No</v-btn>
+                    <v-btn color="success" @click="confirmDelete">Yes</v-btn>
+                    <v-btn color="error" @click="closeDialog">No</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -45,7 +52,7 @@
           <v-card class="bg">
             <v-card-title class="headline">Edit Task
               <v-spacer></v-spacer>
-              <v-btn icon @click="closeDialog()">
+              <v-btn icon @click="closeDialog">
                 <v-icon>mdi-close</v-icon>
               </v-btn>
             </v-card-title>
@@ -72,10 +79,10 @@
                   readonly
                 ></v-text-field>
 
-                <div v-if="currentTask.lastDate !== currentTask.creationDate">
+                <div v-if="currentTask.lastEdit !== currentTask.creationDate">
                   <v-text-field
-                    v-model="currentTask.lastDate"
-                    label="Last Date"
+                    v-model="currentTask.lastEdit"
+                    label="Last Edit"
                     readonly
                   ></v-text-field>
                 </div>
@@ -86,13 +93,58 @@
                   ></v-text-field>
                 </div>
 
-                <v-btn class="mt-2" color="warning" @click="updateTask()">Update</v-btn>
+                <v-btn class="mt-2" color="warning" @click="updateTask">Update</v-btn>
               </v-form>
             </v-card-text>
           </v-card>
         </v-dialog>
 
-        <v-card-actions v-if="tasks.length > 0">
+        <v-dialog v-model="detailsDialog" max-width="600px">
+          <v-card class="bg">
+            <v-card-title class="headline">Task Details
+              <v-spacer></v-spacer>
+              <v-btn icon @click="closeDialog">
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+            </v-card-title>
+
+            <v-card-text>
+                <v-text-field
+                  v-model="currentTask.title"
+                  label="Title"
+                  readonly
+                ></v-text-field>
+
+                <v-text-field
+                  v-model="currentTask.note"
+                  label="Note"
+                  readonly
+                ></v-text-field>
+
+                <v-text-field
+                  v-model="currentTask.creationDate"
+                  label="Creation Date"
+                  readonly
+                ></v-text-field>
+
+                <div v-if="currentTask.lastEdit !== currentTask.creationDate">
+                  <v-text-field
+                    v-model="currentTask.lastEdit"
+                    label="Last Edit"
+                    readonly
+                  ></v-text-field>
+                </div>
+                <div v-else>
+                  <v-text-field
+                    placeholder="Not yet modified"
+                    readonly
+                  ></v-text-field>
+                </div>
+            </v-card-text>
+          </v-card>
+        </v-dialog>
+
+        <v-card-actions v-if="tasks.length > 0" >
           <v-btn small color="error" @click="removeAllTasks">
             Remove All
           </v-btn>
@@ -120,18 +172,20 @@ export default {
       message: '',
       successful: false,
       dialogItemId: null,
+      selectedTaskDetails: null,
+      detailsDialog: false,
       headers: [
         { text: "Title", align: "start", sortable: false, value: "title" },
         { text: "Note", value: "note", sortable: false },
         { text: "CreationDate", value: "creationDate", sortable: false },
-        { text: "LastDate", value: "lastDate", sortable: false },
+        { text: "LastEdit", value: "lastEdit", sortable: false },
         { text: "Actions", value: "actions", sortable: false },
       ],
       currentTask: {
         title: '',
         note: '',
         creationDate: '',
-        lastDate: ''
+        lastEdit: ''
       }
     };
   },
@@ -190,7 +244,7 @@ export default {
         title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
         note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
         creationDate: task.creationDate,
-        lastDate: task.lastDate == task.creationDate ? "Not yet modified" : task.lastDate
+        lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit
       }
     },
 
@@ -207,10 +261,18 @@ export default {
       this.deleteDialog = true
     },
 
+    // mostra il dialog corrispondente alla task selezionata (details)
+    showDetailsDialog(id) {
+      this.dialogItemId = id
+      this.currentTask = this.getTask(this.dialogItemId)
+      this.detailsDialog = true
+    },
+
     // chiusura dialog
     closeDialog() {
       this.deleteDialog = false
       this.editDialog = false
+      this.detailsDialog = false
     },
 
     // reset variabili dialog
@@ -240,7 +302,7 @@ export default {
     // update task selezionato, refresh lista dopo update e reset variabili necessarie per dialog
     updateTask() {
       const date = new Date()
-      this.currentTask.lastDate = date.toLocaleString('it-IT', { timeZone: 'CET' })
+      this.currentTask.lastEdit = date.toLocaleString('it-IT', { timeZone: 'CET' })
       TasksDataService.update(this.currentTask.id, this.currentTask)
         .then(() => {
           this.successful = true

@@ -5,7 +5,7 @@
       title: String,
       note: String,
       creationDate: String,
-      lastDate: String
+      lastEdit: String
     },
     { timestamps: true }
   )

@@ -56,7 +56,7 @@ export default {
         title: '',
         note: '',
         creationDate: '',
-        lastDate: ''
+        lastEdit: ''
       },
       submitted: false,
     }
@@ -69,7 +69,7 @@ export default {
         title: this.task.title,
         note: this.task.note,
         creationDate: date.toLocaleString('it-IT', { timeZone: 'CET' }),
-        lastDate: date.toLocaleString('it-IT', { timeZone: 'CET' })
+        lastEdit: date.toLocaleString('it-IT', { timeZone: 'CET' })
       }
 
       TasksDataService.create(data)

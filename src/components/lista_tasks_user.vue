@@ -29,7 +29,7 @@ export default {
         { text: "Title", align: "start", sortable: false, value: "title" },
         { text: "Note", value: "note", sortable: false },
         { text: "CreationDate", value: "creationDate", sortable: false },
-        { text: "LastDate", value: "lastDate", sortable: false }
+        { text: "LastEdit", value: "lastEdit", sortable: false }
       ],
     };
   },
@@ -74,7 +74,7 @@ export default {
         title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
         note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
         creationDate: task.creationDate,
-        lastDate: task.lastDate == task.creationDate ? "Not yet modified" : task.lastDate
+        lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit
       }
     },
   },
