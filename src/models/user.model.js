@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
 
 const User = mongoose.model(
   "User",
@@ -6,6 +6,7 @@ const User = mongoose.model(
     username: String,
     email: String,
     password: String,
+    image: String,
     roles: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -15,5 +16,4 @@ const User = mongoose.model(
   })
 );
 
-module.exports = User;
-  
+module.exports = User
