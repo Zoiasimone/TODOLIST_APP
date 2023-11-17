@@ -1,24 +1,17 @@
 <template>
-    <div class="container list">
+  <div class="container list">
 
-      <div
-      v-if="message"
-      id="alert"
-      class="alert mb-5"
-      :class="successful ? 'alert-success' : 'alert-danger'">
-      {{message}}
+    <div v-if="message" id="alert" class="alert mb-5" :class="successful ? 'alert-success' : 'alert-danger'">
+      {{ message }}
       <v-icon @click="closeAlert" style="float: right;">mdi-close-circle</v-icon>
     </div>
 
-      <div>
+    <div>
       <v-card class="mx-auto" tile dark>
         <v-card-title>Tasks</v-card-title>
 
-        <v-data-table
-          :headers="headers"
-          :items="tasks"
-          items-per-page="10">
-          
+        <v-data-table :headers="headers" :items="tasks" items-per-page="10">
+
           <template v-slot:item="{ item }">
             <tr @click="showDetailsDialog(item.id)" class="text-left">
               <td>{{ item.title }}</td>
@@ -26,7 +19,15 @@
               <td>{{ item.creationDate }}</td>
               <td>{{ item.lastEdit }}</td>
               <td>
-                <v-icon large class="mr-3" color="warning" @click.stop="showEditDialog(item.id)">mdi-pencil-circle</v-icon>
+                <v-avatar color="grey" size="40px">
+                  <v-img v-if="item.userImage" :src="item.userImage" size="40px" />
+                  <v-icon v-else style="color: antiquewhite;" size="40px">mdi-account-circle</v-icon>
+                </v-avatar>
+              </td>
+              <td>{{ item.username }}</td>
+              <td>
+                <v-icon large class="mr-3" color="warning"
+                  @click.stop="showEditDialog(item.id)">mdi-pencil-circle</v-icon>
                 <v-icon large color="error" @click.stop="showDeleteDialog(item.id)">mdi-delete-circle</v-icon>
               </td>
             </tr>
@@ -35,17 +36,17 @@
         </v-data-table>
 
         <v-dialog v-model="deleteDialog" max-width="400px">
-            <v-card class="bg">
-                <v-card-title class="headline">Confirm Delete</v-card-title>
-                  <v-card-text style="color: black;">
-                    Are you sure you want to delete this task?
-                  </v-card-text>
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="success" @click="confirmDelete">Yes</v-btn>
-                    <v-btn color="error" @click="closeDialog">No</v-btn>
-                </v-card-actions>
-            </v-card>
+          <v-card class="bg">
+            <v-card-title class="headline">Confirm Delete</v-card-title>
+            <v-card-text style="color: black;">
+              Are you sure you want to delete this task?
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="success" @click="confirmDelete">Yes</v-btn>
+              <v-btn color="error" @click="closeDialog">No</v-btn>
+            </v-card-actions>
+          </v-card>
         </v-dialog>
 
         <v-dialog v-model="editDialog" max-width="600px">
@@ -59,38 +60,19 @@
 
             <v-card-text>
               <v-form ref="form" lazy-validation>
-                <v-text-field
-                  v-model="currentTask.title"
-                  :rules="[(v) => !!v || 'Title is required']"
-                  label="Title"
-                  required
-                ></v-text-field>
+                <v-text-field v-model="currentTask.title" :rules="[(v) => !!v || 'Title is required']" label="Title"
+                  required></v-text-field>
 
-                <v-text-field
-                  v-model="currentTask.note"
-                  :rules="[(v) => !!v || 'Note is required']"
-                  label="Note"
-                  required
-                ></v-text-field>
+                <v-text-field v-model="currentTask.note" :rules="[(v) => !!v || 'Note is required']" label="Note"
+                  required></v-text-field>
 
-                <v-text-field
-                  v-model="currentTask.creationDate"
-                  label="Creation Date"
-                  readonly
-                ></v-text-field>
+                <v-text-field v-model="currentTask.creationDate" label="Creation Date" readonly></v-text-field>
 
                 <div v-if="currentTask.lastEdit !== currentTask.creationDate">
-                  <v-text-field
-                    v-model="currentTask.lastEdit"
-                    label="Last Edit"
-                    readonly
-                  ></v-text-field>
+                  <v-text-field v-model="currentTask.lastEdit" label="Last Edit" readonly></v-text-field>
                 </div>
                 <div v-else>
-                  <v-text-field
-                    placeholder="Not yet modified"
-                    readonly
-                  ></v-text-field>
+                  <v-text-field placeholder="Not yet modified" readonly></v-text-field>
                 </div>
 
                 <v-btn class="mt-2" color="warning" @click="updateTask">Update</v-btn>
@@ -109,42 +91,23 @@
             </v-card-title>
 
             <v-card-text>
-                <v-text-field
-                  v-model="currentTask.title"
-                  label="Title"
-                  readonly
-                ></v-text-field>
+              <v-text-field v-model="currentTask.title" label="Title" readonly></v-text-field>
 
-                <v-text-field
-                  v-model="currentTask.note"
-                  label="Note"
-                  readonly
-                ></v-text-field>
+              <v-text-field v-model="currentTask.note" label="Note" readonly></v-text-field>
 
-                <v-text-field
-                  v-model="currentTask.creationDate"
-                  label="Creation Date"
-                  readonly
-                ></v-text-field>
+              <v-text-field v-model="currentTask.creationDate" label="Creation Date" readonly></v-text-field>
 
-                <div v-if="currentTask.lastEdit !== currentTask.creationDate">
-                  <v-text-field
-                    v-model="currentTask.lastEdit"
-                    label="Last Edit"
-                    readonly
-                  ></v-text-field>
-                </div>
-                <div v-else>
-                  <v-text-field
-                    placeholder="Not yet modified"
-                    readonly
-                  ></v-text-field>
-                </div>
+              <div v-if="currentTask.lastEdit !== currentTask.creationDate">
+                <v-text-field v-model="currentTask.lastEdit" label="Last Edit" readonly></v-text-field>
+              </div>
+              <div v-else>
+                <v-text-field placeholder="Not yet modified" readonly></v-text-field>
+              </div>
             </v-card-text>
           </v-card>
         </v-dialog>
 
-        <v-card-actions v-if="tasks.length > 0" >
+        <v-card-actions v-if="tasks.length > 0">
           <v-btn small color="error" @click="removeAllTasks">
             Remove All
           </v-btn>
@@ -179,6 +142,8 @@ export default {
         { text: "Note", value: "note", sortable: false },
         { text: "CreationDate", value: "creationDate", sortable: false },
         { text: "LastEdit", value: "lastEdit", sortable: false },
+        { text: "Creator", value: "creator", sortable: false },
+        { text: "Username", value: "username", sortable: false },
         { text: "Actions", value: "actions", sortable: false },
       ],
       currentTask: {
@@ -186,8 +151,14 @@ export default {
         note: '',
         creationDate: '',
         lastEdit: ''
+      },
+      user: {
+        username: '',
+        email: '',
+        password: '',
+        image: ''
       }
-    };
+    }
   },
   methods: {
     // recupera le tasks dal DB e le assegna all'array che verrà mostrato nella tabella
@@ -225,7 +196,7 @@ export default {
     searchAndRefreshList(title) {
       TasksDataService.findByTitle(title)
         .then((response) => {
-          if(title) {
+          if (title) {
             this.tasks = response.data.map(this.getDisplayTasks)
             console.log(response.data)
           } else {
@@ -233,18 +204,22 @@ export default {
           }
         })
         .catch((e) => {
-          console.log(e)
+          console.error(e)
         })
     },
 
     // assegna ogni task recuperato dal DB a un oggetto task dell'array
     getDisplayTasks(task) {
+      const user = this.getUser(task.users.id)
+
       return {
         id: task.id,
         title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
         note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
         creationDate: task.creationDate,
-        lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit
+        lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit,
+        creator: user.image,
+        username: user.username
       }
     },
 
@@ -291,14 +266,25 @@ export default {
     getTask(id) {
       TasksDataService.get(id)
         .then((response) => {
-          this.currentTask = response.data;
-          console.log(response.data);
+          this.currentTask = response.data
+          console.log(response.data)
         })
         .catch((e) => {
-          console.log(e);
-        });
+          console.error(e)
+        })
     },
-  
+
+    getUser(id) {
+      UserService.get(id)
+        .then((response) => {
+          this.user = response.data
+          console.log(response.data)
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
+
     // update task selezionato, refresh lista dopo update e reset variabili necessarie per dialog
     updateTask() {
       const date = new Date()
@@ -306,40 +292,38 @@ export default {
       TasksDataService.update(this.currentTask.id, this.currentTask)
         .then(() => {
           this.successful = true
-          this.message = "The task was updated successfully!";
+          this.message = "The task was updated successfully!"
           this.refreshList()
           this.resetDeleteStatus()
         })
         .catch((e) => {
-          console.log(e);
-        });
+          console.error(e)
+        })
     },
 
     // delete task selezionato, refresh lista dopo delete e reset variabili necessarie per dialog
     confirmDelete() {
-      if(this.dialogItemId != null) {
+      if (this.dialogItemId != null) {
         TasksDataService.delete(this.dialogItemId)
-        .then(() => {
-          this.successful = true
-          this.message = 'The task was deleted successfully!'
-          this.refreshList()
-          this.resetDeleteStatus()
-        })
-        .catch((err) => {
-          console.error(err)
-          this.resetDeleteStatus()
-        })
+          .then(() => {
+            this.successful = true
+            this.message = 'The task was deleted successfully!'
+            this.refreshList()
+            this.resetDeleteStatus()
+          })
+          .catch((err) => {
+            console.error(err)
+            this.resetDeleteStatus()
+          })
       } else {
         console.log('Id non valido')
       }
     },
   },
   mounted() {
-    // il componente header_tasks viene montato e vengono recuperati i task dal db
-    // per poi essere assegnati i title all'autocomplete di ricerca
     UserService.getPublicContent().then(
-      () => { 
-        this.retrieveTasks() 
+      () => {
+        this.retrieveTasks()
       },
       error => {
         console.error(
@@ -373,8 +357,8 @@ export default {
   margin: auto;
 }
 
-.bg{
-  background: rgb(255,197,185);
-  background: linear-gradient(0deg, rgba(255,197,185) 0%, rgba(220,246,223) 35%, rgba(255,255,255) 74%);
+.bg {
+  background: rgb(255, 197, 185);
+  background: linear-gradient(0deg, rgba(255, 197, 185) 0%, rgba(220, 246, 223) 35%, rgba(255, 255, 255) 74%);
 }
 </style>

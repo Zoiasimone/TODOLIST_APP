@@ -19,12 +19,12 @@ export default new Router({
     {
       path: "/tasksUser",
       name: "lista_tasks_user",
-      component: lista_tasks_user,props:true
+      component: lista_tasks_user
     },
     {
       path: "/tasksAdmin",
       name: "lista_tasks_admin",
-      component: lista_tasks_admin,props:true
+      component: lista_tasks_admin
     },
     {
       path: "/addTask",
@@ -33,10 +33,12 @@ export default new Router({
     },
     {
       path: '/login',
+      name: "login",
       component: login_user
     },
     {
       path: '/register',
+      name: "register",
       component: register_user
     },
     {

@@ -6,9 +6,9 @@ const db = {}
 db.mongoose = mongoose
 db.url = dbConfig.url
 db.tasks = require("./tasks.model")
-db.user = require("./user.model");
-db.role = require("./role.model");
+db.user = require("./user.model")
+db.role = require("./role.model")
 
-db.ROLES = ["user", "admin"];
+db.ROLES = ["user", "admin"]
 
 module.exports = db

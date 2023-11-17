@@ -82,7 +82,7 @@ export default {
   computed: {
     // ritorna i dati dell'utente loggato
     currentUser() {
-      return this.$store.state.auth.user;
+      return this.$store.state.auth.user
     }
   },
   mounted() {

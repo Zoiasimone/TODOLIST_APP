@@ -28,3 +28,27 @@ exports.saveImage = (req, res) => {
       })
     })
 }
+
+exports.findUser = (req, res) => {
+  if (!req.body) {
+    return res.status(400).send({
+      message: "Data to update can not be empty!"
+    })
+  }
+
+  const id = req.params.id;
+
+  User.findById(id)
+    .then(data => {
+      if (!data) {
+        res.status(404).send({
+          message: `Cannot find User with id:${id}.`
+        })
+      } else res.send({ message: "User found successfully." })
+    })
+    .catch(err => {
+      res.status(500).send({
+        message: err.message || "Error find User with id: " + id
+      })
+    })
+}
