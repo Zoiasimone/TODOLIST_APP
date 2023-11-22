@@ -1,9 +1,9 @@
 [
     {
       "users": [
-        {
-          "$oid": "654e5df54abec034048f7639"
-        }
+        
+        "654e5df54abec034048f7639"
+        
       ],
       "title": "Task1",
       "note": "Some things to note about task 1",
@@ -13,9 +13,9 @@
     },
     {
       "users": [
-        {
-          "$oid": "654e5df54abec034048f7639"
-        }
+        
+        "6551d7e7736edf47f85c6781"
+        
       ],
       "title": "Task2",
       "note": "Some things to note about task 2",
@@ -24,9 +24,9 @@
     },
     {
       "users": [
-        {
-          "$oid": "654e5df54abec034048f7639"
-        }
+        
+        "654e5df54abec034048f7639"
+        
       ],
       "title": "Task3",
       "note": "Some things to note about task 3",
@@ -35,9 +35,9 @@
     },
     {
       "users": [
-        {
-          "$oid": "654e5df54abec034048f7639"
-        }
+        
+        "654e5df54abec034048f7639"
+        
       ],
       "title": "Task4",
       "note": "Some things to note about task 4",
@@ -46,9 +46,9 @@
     },
     {
       "users": [
-        {
-          "$oid": "654e5df54abec034048f7639"
-        }
+        
+        "6551d7e7736edf47f85c6781"
+        
       ],
       "title": "Task5",
       "note": "Some things to note about task 5",
@@ -57,9 +57,9 @@
     },
     {
       "users": [
-        {
-          "$oid": "654e5df54abec034048f7639"
-        }
+        
+        "6551d7e7736edf47f85c6781"
+        
       ],
       "title": "Task6",
       "note": "Some things to note about task 6",
@@ -68,9 +68,9 @@
     },
     {
       "users": [
-        {
-          "$oid": "654e5df54abec034048f7639"
-        }
+        
+        "654e5df54abec034048f7639"
+        
       ],
       "title": "Task7",
       "note": "Some things to note about task 7",
@@ -79,9 +79,9 @@
     },
     {
       "users": [
-        {
-          "$oid": "654e5df54abec034048f7639"
-        }
+        
+        "654e5df54abec034048f7639"
+        
       ],
       "title": "Task8",
       "note": "Some things to note about task 8",
@@ -90,9 +90,9 @@
     },
     {
       "users": [
-        {
-          "$oid": "654e5df54abec034048f7639"
-        }
+        
+        "654e5df54abec034048f7639"
+        
       ],
       "title": "Task9",
       "note": "Some things to note about task 9",
@@ -101,9 +101,9 @@
     },
     {
       "users": [
-        {
-          "$oid": "654e5df54abec034048f7639"
-        }
+        
+        "6551d7e7736edf47f85c6781"
+        
       ],
       "title": "Task10",
       "note": "Some things to note about task 10",

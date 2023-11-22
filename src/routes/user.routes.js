@@ -1,5 +1,5 @@
-//const { authJwt } = require("../middlewares")
-const controller = require("../controllers/user.controller")
+const { authJwt } = require("../middlewares")
+const users = require("../controllers/user.controller")
 const express = require("express")
 var router = express.Router()
 
@@ -13,15 +13,13 @@ module.exports = function (app) {
     next()
   })
 
-  app.get("/", controller.allAccess)
-
-  //app.get("/user", [authJwt.verifyToken], controller.userBoard)
-
-  //app.get("/admin", [authJwt.verifyToken, authJwt.isAdmin], controller.adminBoard)
+  app.get("/", users.allAccess)
 }
 
-router.get("/users/:id", controller.findUser)
+router.get("/users", users.findAll)
 
-router.put("/users/:id", controller.saveImage)
+router.get("/users/:id", users.findUser)
+
+router.put("/users/:id", [authJwt.verifyToken], users.saveImage)
 
 module.exports = router

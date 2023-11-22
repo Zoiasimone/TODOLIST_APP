@@ -1,10 +1,10 @@
-const config = require("../config/auth.config");
-const db = require("../models");
-const User = db.user;
-const Role = db.role;
+const config = require("../config/auth.config")
+const db = require("../models")
+const User = db.user
+const Role = db.role
 
-var jwt = require("jsonwebtoken");
-var bcrypt = require("bcryptjs");
+var jwt = require("jsonwebtoken")
+var bcrypt = require("bcryptjs")
 
 exports.signup = (req, res) => {
   const user = new User({
@@ -12,12 +12,12 @@ exports.signup = (req, res) => {
     email: req.body.email,
     password: bcrypt.hashSync(req.body.password, 8),
     image: req.body.image
-  });
+  })
 
   user.save((err, user) => {
     if (err) {
-      res.status(500).send({ message: err });
-      return;
+      res.status(500).send({ message: err })
+      return
     }
 
     if (req.body.roles) {
@@ -27,41 +27,41 @@ exports.signup = (req, res) => {
         },
         (err, roles) => {
           if (err) {
-            res.status(500).send({ message: err });
-            return;
+            res.status(500).send({ message: err })
+            return
           }
 
-          user.roles = roles.map(role => role._id);
+          user.roles = roles.map(role => role._id)
           user.save(err => {
             if (err) {
-              res.status(500).send({ message: err });
-              return;
+              res.status(500).send({ message: err })
+              return
             }
 
-            res.send({ message: "User was registered successfully!" });
-          });
+            res.send({ message: "User was registered successfully!" })
+          })
         }
-      );
+      )
     } else {
       Role.findOne({ name: "user" }, (err, role) => {
         if (err) {
-          res.status(500).send({ message: err });
-          return;
+          res.status(500).send({ message: err })
+          return
         }
 
-        user.roles = [role._id];
+        user.roles = [role._id]
         user.save(err => {
           if (err) {
-            res.status(500).send({ message: err });
-            return;
+            res.status(500).send({ message: err })
+            return
           }
 
-          res.send({ message: "User was registered successfully!" });
-        });
-      });
+          res.send({ message: "User was registered successfully!" })
+        })
+      })
     }
-  });
-};
+  })
+}
 
 exports.signin = (req, res) => {
   User.findOne({
@@ -71,23 +71,23 @@ exports.signin = (req, res) => {
     .exec((err, user) => {
       if (err) {
         res.status(500).send({ message: err });
-        return;
+        return
       }
 
       if (!user) {
-        return res.status(404).send({ message: "User Not found." });
+        return res.status(404).send({ message: "User Not found." })
       }
 
       var passwordIsValid = bcrypt.compareSync(
         req.body.password,
         user.password
-      );
+      )
 
       if (!passwordIsValid) {
         return res.status(401).send({
           accessToken: null,
           message: "Invalid Password!"
-        });
+        })
       }
 
       const token = jwt.sign({ id: user.id },
@@ -96,12 +96,12 @@ exports.signin = (req, res) => {
           algorithm: 'HS256',
           allowInsecureKeySizes: true,
           expiresIn: 86400, // 24 hours
-        });
+        })
 
-      var authorities = [];
+      var authorities = []
 
       for (let i = 0; i < user.roles.length; i++) {
-        authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
+        authorities.push("ROLE_" + user.roles[i].name.toUpperCase())
       }
       res.status(200).send({
         id: user._id,
@@ -110,6 +110,6 @@ exports.signin = (req, res) => {
         image: user.image,
         roles: authorities,
         accessToken: token
-      });
-    });
-};
+      })
+    })
+}

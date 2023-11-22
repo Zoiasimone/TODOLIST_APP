@@ -5,9 +5,9 @@ var schema = mongoose.Schema({
   note: String,
   creationDate: String,
   lastEdit: String,
-  user: [
+  users: [
     {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "User"
     }
   ]

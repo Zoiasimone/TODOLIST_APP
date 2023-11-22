@@ -9,21 +9,13 @@
 
     <div v-if="!submitted">
       <v-form ref="form" lazy-validation>
-        <v-text-field
-          v-model="task.title"
-          :rules="[(v) => !!v || 'Title is required']"
-          label="Title"
-          required
-        ></v-text-field>
+        <v-text-field v-model="task.title" :rules="[(v) => !!v || 'Title is required']" label="Title"
+          required></v-text-field>
 
-        <v-text-field
-          v-model="task.note"
-          :rules="[(v) => !!v || 'Note is required']"
-          label="Note"
-          required
-        ></v-text-field>
+        <v-text-field v-model="task.note" :rules="[(v) => !!v || 'Note is required']" label="Note"
+          required></v-text-field>
       </v-form>
-          <v-btn color="success" class="mt-3" @click="saveTask">add</v-btn>
+      <v-btn color="success" class="mt-3" @click="saveTask">add</v-btn>
     </div>
 
     <div v-else>
@@ -56,20 +48,23 @@ export default {
         title: '',
         note: '',
         creationDate: '',
-        lastEdit: ''
+        lastEdit: '',
+        users: []
       },
       submitted: false,
     }
   },
   methods: {
     // crea e salva la task nella collection del DB
-    saveTask () {
+    saveTask() {
       const date = new Date()
+      this.task.users.push(this.currentUser.id)
       var data = {
         title: this.task.title,
         note: this.task.note,
         creationDate: date.toLocaleString('it-IT', { timeZone: 'CET' }),
-        lastEdit: date.toLocaleString('it-IT', { timeZone: 'CET' })
+        lastEdit: date.toLocaleString('it-IT', { timeZone: 'CET' }),
+        users: this.task.users[0]
       }
 
       TasksDataService.create(data)
@@ -91,14 +86,20 @@ export default {
     },
 
     // resetta il form del componente
-    resetForm () {
-        this.$refs.form.reset()
-      },
+    resetForm() {
+      this.$refs.form.reset()
+    },
 
-      // resetta la validazione del componente
-    resetValidation () {
+    // resetta la validazione del componente
+    resetValidation() {
       this.$refs.form.resetValidation()
     },
+  },
+  computed: {
+    // ritorna i dati dell'utente loggato
+    currentUser() {
+      return this.$store.state.auth.user
+    }
   },
 }
 </script>
@@ -110,8 +111,8 @@ export default {
   border-style: double;
 }
 
-.bg{
-  background: rgb(255,197,185);
-  background: linear-gradient(0deg, rgba(255,197,185) 0%, rgba(220,246,223) 35%, rgba(255,255,255) 74%);
+.bg {
+  background: rgb(255, 197, 185);
+  background: linear-gradient(0deg, rgba(255, 197, 185) 0%, rgba(220, 246, 223) 35%, rgba(255, 255, 255) 74%);
 }
 </style>

@@ -7,7 +7,7 @@ var schema = mongoose.Schema({
   image: String,
   roles: [
     {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "Role"
     }
   ]

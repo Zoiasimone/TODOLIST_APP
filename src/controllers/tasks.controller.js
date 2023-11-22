@@ -15,7 +15,8 @@ exports.create = (req, res) => {
     title: req.body.title,
     note: req.body.note,
     creationDate: req.body.creationDate,
-    lastDate: req.body.lastDate
+    lastEdit: req.body.lastEdit,
+    users: req.body.users
   })
 
   // Save Task in the database
@@ -28,13 +29,13 @@ exports.create = (req, res) => {
       res.status(500).send({
         message:
           err.message || "Some error occurred while creating the Task."
-      });
-    });
-};
+      })
+    })
+}
 
 // Retrieve all Tasks from the database.
 exports.findAll = (req, res) => {
-  const title = req.query.title;
+  const title = req.query.title
   var condition = title ? { title: { $regex: new RegExp(title), $options: "i" } } : {}
 
   Task.find(condition)
@@ -45,13 +46,13 @@ exports.findAll = (req, res) => {
       res.status(500).send({
         message:
           err.message || "Some error occurred while retrieving tasks."
-      });
-    });
-};
+      })
+    })
+}
 
 // Find a single Task with an id
 exports.findOne = (req, res) => {
-  const id = req.params.id;
+  const id = req.params.id
 
   Task.findById(id)
     .then(data => {
@@ -74,7 +75,7 @@ exports.update = (req, res) => {
     })
   }
 
-  const id = req.params.id;
+  const id = req.params.id
 
   Task.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
     .then(data => {
@@ -93,18 +94,18 @@ exports.update = (req, res) => {
 
 // Delete a Task with the specified id in the request
 exports.delete = (req, res) => {
-  const id = req.params.id;
+  const id = req.params.id
 
   Task.findByIdAndRemove(id)
     .then(data => {
       if (!data) {
         res.status(404).send({
           message: `Cannot delete Task with id:${id}. Maybe Task was not found!`
-        });
+        })
       } else {
         res.send({
           message: "Task was deleted successfully!"
-        });
+        })
       }
     })
     .catch(err => {

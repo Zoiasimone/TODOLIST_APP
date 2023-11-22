@@ -10,7 +10,7 @@
       <v-card class="mx-auto" tile dark>
         <v-card-title>Tasks</v-card-title>
 
-        <v-data-table :headers="headers" :items="tasks" items-per-page="10">
+        <v-data-table :headers="headers" :items="tasks">
 
           <template v-slot:item="{ item }">
             <tr @click="showDetailsDialog(item.id)" class="text-left">
@@ -19,12 +19,12 @@
               <td>{{ item.creationDate }}</td>
               <td>{{ item.lastEdit }}</td>
               <td>
-                <v-avatar color="grey" size="40px">
-                  <v-img v-if="item.userImage" :src="item.userImage" size="40px" />
+                <v-avatar class="mr-1" color="grey" size="40px">
+                  <v-img v-if="item.userAssigned.image" :src="item.userAssigned.image" size="40px" />
                   <v-icon v-else style="color: antiquewhite;" size="40px">mdi-account-circle</v-icon>
                 </v-avatar>
+                <strong>{{ item.userAssigned.username }}</strong>
               </td>
-              <td>{{ item.username }}</td>
               <td>
                 <v-icon large class="mr-3" color="warning"
                   @click.stop="showEditDialog(item.id)">mdi-pencil-circle</v-icon>
@@ -75,6 +75,26 @@
                   <v-text-field placeholder="Not yet modified" readonly></v-text-field>
                 </div>
 
+                <div>
+                  <v-select v-model="currentTask.userAssigned" :items="usersEdit" item-text="username" item-value="id"
+                    label="Assigned To">
+                    <template v-slot:selection="{ item }">
+                      <v-avatar class="mr-1" size="24px">
+                        <v-img v-if="item.image" :src="item.image" size="24px" />
+                        <v-icon v-else>mdi-account-circle</v-icon>
+                      </v-avatar>
+                      {{ item.username }}
+                    </template>
+                    <template v-slot:item="{ item }">
+                      <v-list-item-avatar class="">
+                        <v-img v-if="item.image" :src="item.image" size="24px" />
+                        <v-icon v-else>mdi-account-circle</v-icon>
+                      </v-list-item-avatar>
+                      <strong>{{ item.username }}</strong>
+                    </template>
+                  </v-select>
+                </div>
+
                 <v-btn class="mt-2" color="warning" @click="updateTask">Update</v-btn>
               </v-form>
             </v-card-text>
@@ -91,17 +111,27 @@
             </v-card-title>
 
             <v-card-text>
-              <v-text-field v-model="currentTask.title" label="Title" readonly></v-text-field>
+              <v-text-field v-model="currentTask.title" label="Title" readonly />
 
-              <v-text-field v-model="currentTask.note" label="Note" readonly></v-text-field>
+              <v-text-field v-model="currentTask.note" label="Note" readonly />
 
-              <v-text-field v-model="currentTask.creationDate" label="Creation Date" readonly></v-text-field>
+              <v-text-field v-model="currentTask.creationDate" label="Creation Date" readonly />
 
               <div v-if="currentTask.lastEdit !== currentTask.creationDate">
-                <v-text-field v-model="currentTask.lastEdit" label="Last Edit" readonly></v-text-field>
+                <v-text-field v-model="currentTask.lastEdit" label="Last Edit" readonly />
               </div>
               <div v-else>
-                <v-text-field placeholder="Not yet modified" readonly></v-text-field>
+                <v-text-field placeholder="Not yet modified" readonly />
+              </div>
+              <div>
+                <v-avatar class="mr-1" color="grey" size="40px">
+                  <v-img v-if="currentTask.userAssigned && currentTask.userAssigned.image"
+                    :src="currentTask.userAssigned.image" size="40px" />
+                  <v-icon v-else style="color: antiquewhite;" size="40px">mdi-account-circle</v-icon>
+                </v-avatar>
+                <h3 v-if="currentTask.userAssigned && currentTask.userAssigned.username">
+                  <strong>{{ currentTask.userAssigned.username }}</strong>
+                </h3>
               </div>
             </v-card-text>
           </v-card>
@@ -119,15 +149,21 @@
 </template>
 
 <script>
-import TasksDataService from '@/services/TasksDataService'
+import TasksDataService from '../services/TasksDataService'
 import UserService from '../services/user.service'
-
 
 export default {
   name: "lista_tasks_admin",
   data() {
     return {
       tasks: [],
+      usersEdit: [],
+      user: {
+        id: '',
+        username: '',
+        email: '',
+        image: ''
+      },
       title: '',
       content: '',
       editDialog: false,
@@ -137,40 +173,86 @@ export default {
       dialogItemId: null,
       selectedTaskDetails: null,
       detailsDialog: false,
+      isDropdownOpen: false,
       headers: [
-        { text: "Title", align: "start", sortable: false, value: "title" },
+        { text: "Title", value: "title", sortable: false, align: "start" },
         { text: "Note", value: "note", sortable: false },
         { text: "CreationDate", value: "creationDate", sortable: false },
         { text: "LastEdit", value: "lastEdit", sortable: false },
-        { text: "Creator", value: "creator", sortable: false },
-        { text: "Username", value: "username", sortable: false },
+        { text: "AssignedTo", value: "assignedTo", sortable: false },
         { text: "Actions", value: "actions", sortable: false },
       ],
       currentTask: {
         title: '',
         note: '',
         creationDate: '',
-        lastEdit: ''
-      },
-      user: {
-        username: '',
-        email: '',
-        password: '',
-        image: ''
+        lastEdit: '',
+        userAssigned: {
+          username: '',
+          image: ''
+        }
       }
     }
   },
   methods: {
-    // recupera le tasks dal DB e le assegna all'array che verrà mostrato nella tabella
-    retrieveTasks() {
-      TasksDataService.getAll()
-        .then((response) => {
-          this.tasks = response.data.map(this.getDisplayTasks)
-          console.log(response.data)
-        })
-        .catch((err) => {
-          console.error(err)
-        });
+    // recupero delle tasks dal DB e asseganzione all'array che verrà mostrato nella tabella
+    async retrieveTasks() {
+      try {
+        const response = await TasksDataService.getAll()
+        const tasks = response.data
+
+        const tasksWithUserAssigned = await Promise.all(
+          tasks.map(async (task) => {
+            const userAssigned = await this.getUserAssigned(task.users[0])
+
+            return {
+              id: task.id,
+              title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
+              note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
+              creationDate: task.creationDate,
+              lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit,
+              userAssigned: userAssigned
+            }
+          })
+        )
+        this.tasks = tasksWithUserAssigned
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    // assegna ogni task recuperato dal DB a un oggetto task dell'array
+    getDisplayTasks(task) {
+      return {
+        id: task.id,
+        title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
+        note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
+        creationDate: task.creationDate,
+        lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit,
+        userAssigned: this.getUserAssigned(task.users[0])
+      }
+    },
+
+    // recupero di tutti gli users dal db
+    async getAllUsers() {
+      try {
+        const response = await UserService.getAll()
+        const usersArray = response.data
+
+        const users = await Promise.all(
+          usersArray.map(async (user) => {
+            return {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              image: user.image
+            }
+          })
+        )
+        this.usersEdit = users
+      } catch (err) {
+        console.error(err)
+      }
     },
 
     // refresh della lista dopo qualsiasi tipo di modifica
@@ -181,8 +263,7 @@ export default {
     // rimozione di tutte le task e ritorno delle variabili allo stato iniziale
     removeAllTasks() {
       TasksDataService.deleteAll()
-        .then((response) => {
-          console.log(response.data)
+        .then(() => {
           this.successful = true
           this.message = 'All tasks removed successfully!'
           this.refreshList()
@@ -198,7 +279,6 @@ export default {
         .then((response) => {
           if (title) {
             this.tasks = response.data.map(this.getDisplayTasks)
-            console.log(response.data)
           } else {
             this.retrieveTasks()
           }
@@ -208,18 +288,26 @@ export default {
         })
     },
 
-    // assegna ogni task recuperato dal DB a un oggetto task dell'array
-    getDisplayTasks(task) {
-      const user = this.getUser(task.users.id)
+    // recupero degli user in base all'id passato come parametro
+    async getUserAssigned(id) {
+      try {
+        const response = await UserService.get(id)
+        return response.data
+      } catch (err) {
+        console.error(err)
+        return {}
+      }
+    },
 
-      return {
-        id: task.id,
-        title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
-        note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
-        creationDate: task.creationDate,
-        lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit,
-        creator: user.image,
-        username: user.username
+    // recupero task per update
+    async getTask(id) {
+      try {
+        const response = await TasksDataService.get(id)
+        this.currentTask = response.data
+        this.currentTask.userAssigned = await this.getUserAssigned(this.currentTask.users[0])
+        console.log(this.currentTask)
+      } catch (err) {
+        console.error(err)
       }
     },
 
@@ -227,6 +315,7 @@ export default {
     showEditDialog(id) {
       this.dialogItemId = id
       this.currentTask = this.getTask(this.dialogItemId)
+      this.getAllUsers()
       this.editDialog = true
     },
 
@@ -262,33 +351,16 @@ export default {
       this.successful = false
     },
 
-    // recupero task per update
-    getTask(id) {
-      TasksDataService.get(id)
-        .then((response) => {
-          this.currentTask = response.data
-          console.log(response.data)
-        })
-        .catch((e) => {
-          console.error(e)
-        })
-    },
-
-    getUser(id) {
-      UserService.get(id)
-        .then((response) => {
-          this.user = response.data
-          console.log(response.data)
-        })
-        .catch((e) => {
-          console.error(e)
-        })
-    },
-
     // update task selezionato, refresh lista dopo update e reset variabili necessarie per dialog
     updateTask() {
       const date = new Date()
       this.currentTask.lastEdit = date.toLocaleString('it-IT', { timeZone: 'CET' })
+      console.log(this.currentTask)
+      UserService.findByUsername(this.currentTask.userAssigned)
+        .then(response => {
+          console.log(response.data)
+        })
+      this.currentTask.users[0] = this.currentTask.userAssigned.id
       TasksDataService.update(this.currentTask.id, this.currentTask)
         .then(() => {
           this.successful = true
@@ -316,9 +388,9 @@ export default {
             this.resetDeleteStatus()
           })
       } else {
-        console.log('Id non valido')
+        console.error('Id non valido')
       }
-    },
+    }
   },
   mounted() {
     UserService.getPublicContent().then(
@@ -347,7 +419,7 @@ export default {
 <style scoped>
 .list {
   margin: auto;
-  width: 1000px;
+  width: 1200px;
   height: 800px;
 }
 

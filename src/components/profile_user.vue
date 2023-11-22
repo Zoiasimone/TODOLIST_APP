@@ -4,7 +4,7 @@
       <v-card max-width="450px" class="mx-auto bg" elevation="2">
         <v-row justify="center">
           <v-col align-self="start" class="d-flex justify-center align-center pa-0" cols="12">
-            <v-avatar class="avatar-shadow mt-5" color="grey" size="164" @click="showImageDialog(currentUser.id)">
+            <v-avatar class="avatar-shadow mt-5" color="grey" size="164" @click="showImageDialog">
               <v-img v-if="currentUser.image" :src="currentUser.image" size="auto" />
               <v-icon v-else style="color: antiquewhite;" size="200">mdi-account-circle</v-icon>
             </v-avatar>
@@ -67,7 +67,7 @@
 </template>
   
 <script>
-import UserService from '@/services/user.service';
+import UserService from '../services/user.service'
 
 export default {
   name: 'profile_user',
@@ -93,9 +93,9 @@ export default {
   },
   methods: {
     // mostra il dialog corrispondente alla selezione dell'immagine profilo
-    showImageDialog(id) {
-      this.imageUserId = id
+    showImageDialog() {
       this.imageDialog = true
+      console.log(this.currentUser)
     },
     // chiusura dialog
     closeAlert() {
@@ -109,15 +109,21 @@ export default {
     //salva l'immagine nel db in base allo user loggato
     uploadImage() {
       this.currentUser.image = this.previewImage
-      UserService.saveImage(this.imageUserId, this.currentUser).then(
+      if (this.currentUser.roles[0] == 'ROLE_ADMIN')
+        this.currentUser.roles[0] = '654e0d6982423b1d3e726dc6'
+      else
+        this.currentUser.roles[0] = '654e0d6982423b1d3e726dc4'
+      UserService.saveImage(this.currentUser.id, this.currentUser).then(
         () => {
           this.message = 'Image uploaded successfully'
+          this.previewImage = undefined
           this.imageDialog = false
         }
       ).catch((error) => {
         console.error('Upload image error:', error.response)
         this.message = 'Could not upload the image! ' + error.response.data.message
         this.currentUser.image = ''
+        this.previewImage = undefined
         this.imageDialog = false
       })
     }
