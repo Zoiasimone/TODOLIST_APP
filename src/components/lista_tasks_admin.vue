@@ -149,7 +149,7 @@
 </template>
 
 <script>
-import TasksDataService from '../services/TasksDataService'
+import TasksDataService from '../services/task.service'
 import UserService from '../services/user.service'
 
 export default {
@@ -312,10 +312,10 @@ export default {
     },
 
     // mostra il dialog corrispondente al button selezionato (update)
-    showEditDialog(id) {
+    async showEditDialog(id) {
       this.dialogItemId = id
       this.currentTask = this.getTask(this.dialogItemId)
-      this.getAllUsers()
+      await this.getAllUsers()
       this.editDialog = true
     },
 

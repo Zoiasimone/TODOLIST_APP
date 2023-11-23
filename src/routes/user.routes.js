@@ -1,4 +1,3 @@
-const { authJwt } = require("../middlewares")
 const users = require("../controllers/user.controller")
 const express = require("express")
 var router = express.Router()
@@ -20,6 +19,6 @@ router.get("/users", users.findAll)
 
 router.get("/users/:id", users.findUser)
 
-router.put("/users/:id", [authJwt.verifyToken], users.saveImage)
+router.put("/users/:id", users.saveImageForUser)
 
 module.exports = router

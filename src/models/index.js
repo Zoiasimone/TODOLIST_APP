@@ -8,6 +8,7 @@ db.url = dbConfig.url
 db.tasks = require("./tasks.model")
 db.user = require("./user.model")
 db.role = require("./role.model")
+db.image = require("./image.model")
 
 db.ROLES = ["user", "admin"]
 

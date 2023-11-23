@@ -14,22 +14,13 @@
       <v-btn outlined class="mx-2" v-if="isAdmin" to="/addTask" text>
         New Task <v-icon>mdi-plus-circle</v-icon>
       </v-btn>
-      
-      <v-autocomplete 
-        v-if="isTasksRoute"
-        class="mt-4 mx-5"
-        v-model="titleSearch"
-        :items="tasksAutocomplete"
-        item-text="title"
-        label="Search by title"
-        dark
-        clearable
-        @change="handleTitleSelection"
-      />
+
+      <v-autocomplete v-if="isTasksRoute" class="mt-4 mx-5" v-model="titleSearch" :items="tasksAutocomplete"
+        item-text="title" label="Search by title" dark clearable @change="handleTitleSelection" />
       <v-spacer></v-spacer>
 
       <div v-if="!currentUser">
-        <v-btn  class="mx-3" outlined to="/register" text>
+        <v-btn class="mx-3" outlined to="/register" text>
           Sign Up <v-icon>mdi-chevron-down-circle-outline</v-icon>
         </v-btn>
         <v-btn outlined to="/login" text>
@@ -49,8 +40,8 @@
 </template>
 
 <script>
-import UserService from '@/services/user.service'
-import TasksDataService from '@/services/TasksDataService'
+import UserService from '../services/user.service'
+import TasksDataService from '../services/task.service'
 
 export default {
   name: 'header_tasks',
@@ -100,8 +91,8 @@ export default {
     // il componente header_tasks viene montato e vengono recuperati i task dal db
     // per poi essere assegnati i title all'autocomplete di ricerca
     UserService.getPublicContent().then(
-      () => { 
-        this.retrieveTasks() 
+      () => {
+        this.retrieveTasks()
       },
       error => {
         console.error(
@@ -139,7 +130,7 @@ export default {
 </script>
 
 <style scoped>
-  #btn-color {
-    background-color: darkcyan;
-  }
+#btn-color {
+  background-color: darkcyan;
+}
 </style>

@@ -62,7 +62,7 @@ export default {
     registerUser() {
       this.message = ''
       this.submitted = true
-      this.user.image = ''
+      console.log(this.user)
 
       if (this.user.username && this.user.email &&
         this.user.password) {

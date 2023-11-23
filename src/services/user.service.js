@@ -6,8 +6,8 @@ class UserService {
     return http.get('/api/tasks', { headers: AuthHeader.authHeader() })
   }
 
-  saveImage(id, data) {
-    return http.put(`/api/users/${id}`, data, { headers: AuthHeader.authHeader() })
+  saveImageForUser(id, data) {
+    return http.put(`/api/users/${id}`, data)
   }
 
   get(id) {
@@ -18,9 +18,6 @@ class UserService {
     return http.get("/api/users")
   }
 
-  findByUsername(username) {
-    return http.get(`/api/users?username=${username}`)
-  }
 }
 
 export default new UserService()

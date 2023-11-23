@@ -5,7 +5,7 @@
         <v-row justify="center">
           <v-col align-self="start" class="d-flex justify-center align-center pa-0" cols="12">
             <v-avatar class="avatar-shadow mt-5" color="grey" size="164" @click="showImageDialog">
-              <v-img v-if="currentUser.image" :src="currentUser.image" size="auto" />
+              <v-img v-if="image" :src="image" size="auto" />
               <v-icon v-else style="color: antiquewhite;" size="200">mdi-account-circle</v-icon>
             </v-avatar>
           </v-col>
@@ -53,7 +53,7 @@
 
         <div v-if="previewImage">
           <div>
-            <img class="preview mx-auto" :src="previewImage" alt="" />
+            <img class="preview mx-auto" :src="previewImage" />
           </div>
         </div>
       </v-card>
@@ -68,15 +68,18 @@
   
 <script>
 import UserService from '../services/user.service'
+import ImageService from '../services/image.service'
 
 export default {
   name: 'profile_user',
   data() {
     return {
       imageDialog: false,
-      imageUserId: null,
-      previewImage: undefined,
-      message: null
+      previewImage: null,
+      message: null,
+      image: null,
+      formData: new FormData(),
+      imageBuilder: []
     }
   },
   computed: {
@@ -84,49 +87,76 @@ export default {
     currentUser() {
       return this.$store.state.auth.user
     }
+
   },
   mounted() {
     // se non è loggato nessun utente reindirizza a /login
     if (!this.currentUser) {
       this.$router.push('/login')
     }
+
+    if (this.currentUser.image != 'NO_IMAGE') {
+      ImageService.get(this.currentUser.image)
+        .then(response => {
+          if (response && response.data) {
+            this.image = URL.createObjectURL(response.data)
+          } else {
+            console.error('No data found')
+          }
+        }).catch((error) => {
+          console.error('Do not find image with id:' + this.currentUser.image, error.response)
+        })
+    }
   },
   methods: {
     // mostra il dialog corrispondente alla selezione dell'immagine profilo
     showImageDialog() {
       this.imageDialog = true
-      console.log(this.currentUser)
     },
     // chiusura dialog
     closeAlert() {
       this.message = ''
     },
+
     //seleziona l'immagine da impostare
     selectImage(image) {
       this.previewImage = URL.createObjectURL(image)
+      this.formData = new FormData()
+      this.formData.append('image', image)
       this.message = ''
     },
+
     //salva l'immagine nel db in base allo user loggato
     uploadImage() {
-      this.currentUser.image = this.previewImage
       if (this.currentUser.roles[0] == 'ROLE_ADMIN')
         this.currentUser.roles[0] = '654e0d6982423b1d3e726dc6'
       else
         this.currentUser.roles[0] = '654e0d6982423b1d3e726dc4'
-      UserService.saveImage(this.currentUser.id, this.currentUser).then(
+      ImageService.create(this.formData).then(
+        (response) => {
+          this.currentUser.image = response.data.id
+        }
+      ).catch((error) => {
+        console.error('Create image error:', error.response)
+        this.message = 'Could not create the image! ' + error.response.data.message
+        this.previewImage = undefined
+        this.imageDialog = false
+      })
+
+      UserService.saveImageForUser(this.currentUser.id, this.currentUser).then(
         () => {
-          this.message = 'Image uploaded successfully'
-          this.previewImage = undefined
+          this.message = 'Image created and uploaded successfully'
+          this.previewImage = null
           this.imageDialog = false
         }
       ).catch((error) => {
         console.error('Upload image error:', error.response)
-        this.message = 'Could not upload the image! ' + error.response.data.message
+        this.message = 'Could not upload the image! ' + error.response.data
         this.currentUser.image = ''
-        this.previewImage = undefined
+        this.previewImage = null
         this.imageDialog = false
       })
-    }
+    },
   }
 }
 </script>

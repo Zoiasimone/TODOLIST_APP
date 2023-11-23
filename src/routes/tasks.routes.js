@@ -1,10 +1,11 @@
 
-const tasks = require("../controllers/tasks.controller.js")
+const tasks = require("../controllers/tasks.controller")
 const express = require("express")
 var router = express.Router()
 
 // Create a new Task
 router.post("/tasks", tasks.create)
+
 // Retrieve all Tasks
 router.get("/tasks", tasks.findAll)
 

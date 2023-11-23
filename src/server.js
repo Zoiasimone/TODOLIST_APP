@@ -1,6 +1,7 @@
 const express = require("express")
 const taskRoutes = require("./routes/tasks.routes")
 const userRoutes = require("./routes/user.routes")
+const imageRoutes = require("./routes/image.routes")
 const bodyParser = require("body-parser")
 const cors = require("cors")
 const db = require("./models")
@@ -41,6 +42,7 @@ db.mongoose
       require('./routes/auth.routes')(app)
       app.use("/api", taskRoutes)
       app.use("/api", userRoutes)
+      app.use("/api", imageRoutes)
 
     })
   })

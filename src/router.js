@@ -44,7 +44,7 @@ export default new Router({
     {
       path: '/profile',
       name: 'profile',
-      component: () => import('./components/profile_user.vue')
+      component: () => import('./components/profile_user')
     }
   ]
 });

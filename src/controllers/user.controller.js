@@ -5,7 +5,7 @@ exports.allAccess = (req, res) => {
   res.status(200).send("Public Content")
 }
 
-exports.saveImage = (req, res) => {
+exports.saveImageForUser = (req, res) => {
   if (!req.body) {
     return res.status(400).send({
       message: "Data to update can not be empty!"

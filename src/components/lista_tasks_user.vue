@@ -46,7 +46,7 @@
 </template>
 
 <script>
-import TasksDataService from '@/services/TasksDataService'
+import TasksDataService from '../services/task.service'
 import UserService from '../services/user.service'
 
 

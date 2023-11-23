@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import TasksDataService from '@/services/TasksDataService'
+import TasksDataService from '../services/task.service'
 
 export default {
   name: "add_task",
