@@ -3,7 +3,12 @@ const mongoose = require("mongoose")
 var schema = mongoose.Schema({
   name: String,
   data: Buffer,
-  contentType: String
+  contentType: String,
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
 })
 
 schema.method("toJSON", function () {
@@ -12,5 +17,5 @@ schema.method("toJSON", function () {
   return object
 })
 
-const Image = mongoose.model("Image", schema)
-module.exports = Image
+const Images = mongoose.model("Images", schema)
+module.exports = Images

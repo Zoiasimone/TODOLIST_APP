@@ -45,8 +45,8 @@
       <v-card class="bg">
         <v-card-title>Upload Image</v-card-title>
         <v-card-text>
-          <v-file-input v-model="previewImage" prepend-icon="mdi-camera"
-            accept="image/png, image/jpeg, image/bmp, image/jpg" @change="selectImage" />
+          <v-file-input v-model="previewImage" prepend-icon="mdi-camera" accept="image/png, image/jpeg, image/bmp"
+            @change="selectImage" />
         </v-card-text>
         <v-btn class="mx-auto mb-2" color="success" prepend-icon="mdi-cloud-upload" @click="uploadImage">Upload</v-btn>
         <v-btn class="ml-5 mb-2" color="error" @click="imageDialog = false">exit</v-btn>
@@ -67,8 +67,8 @@
 </template>
   
 <script>
-import UserService from '../services/user.service'
 import ImageService from '../services/image.service'
+import { Buffer } from 'buffer'
 
 export default {
   name: 'profile_user',
@@ -79,7 +79,7 @@ export default {
       message: null,
       image: null,
       formData: new FormData(),
-      imageBuilder: []
+      acceptedType: ['image/png', 'image/jpeg', 'image/bmp']
     }
   },
   computed: {
@@ -87,7 +87,6 @@ export default {
     currentUser() {
       return this.$store.state.auth.user
     }
-
   },
   mounted() {
     // se non è loggato nessun utente reindirizza a /login
@@ -95,20 +94,10 @@ export default {
       this.$router.push('/login')
     }
 
-    if (this.currentUser.image != 'NO_IMAGE') {
-      ImageService.get(this.currentUser.image)
-        .then(response => {
-          if (response && response.data) {
-            this.image = URL.createObjectURL(response.data)
-          } else {
-            console.error('No data found')
-          }
-        }).catch((error) => {
-          console.error('Do not find image with id:' + this.currentUser.image, error.response)
-        })
-    }
+    this.retrieveImage()
   },
   methods: {
+
     // mostra il dialog corrispondente alla selezione dell'immagine profilo
     showImageDialog() {
       this.imageDialog = true
@@ -120,45 +109,72 @@ export default {
 
     //seleziona l'immagine da impostare
     selectImage(image) {
-      this.previewImage = URL.createObjectURL(image)
-      this.formData = new FormData()
-      this.formData.append('image', image)
-      this.message = ''
+      if (this.acceptedType.includes(image.type)) {
+        this.previewImage = URL.createObjectURL(image)
+        this.formData = new FormData()
+        this.formData.append('image', image)
+        this.formData.append('userId', this.currentUser.id)
+        this.message = ''
+      } else {
+        this.imageDialog = false
+        this.message = 'Image type is not valid, use a valid type(.png, .jpeg, .bmp)'
+      }
     },
 
     //salva l'immagine nel db in base allo user loggato
-    uploadImage() {
-      if (this.currentUser.roles[0] == 'ROLE_ADMIN')
+    async uploadImage() {
+      if (this.currentUser.roles[0] == 'ROLE_ADMIN') {
         this.currentUser.roles[0] = '654e0d6982423b1d3e726dc6'
-      else
+      } else {
         this.currentUser.roles[0] = '654e0d6982423b1d3e726dc4'
-      ImageService.create(this.formData).then(
-        (response) => {
-          this.currentUser.image = response.data.id
-        }
-      ).catch((error) => {
-        console.error('Create image error:', error.response)
-        this.message = 'Could not create the image! ' + error.response.data.message
-        this.previewImage = undefined
-        this.imageDialog = false
-      })
+      }
 
-      UserService.saveImageForUser(this.currentUser.id, this.currentUser).then(
-        () => {
-          this.message = 'Image created and uploaded successfully'
-          this.previewImage = null
-          this.imageDialog = false
-        }
-      ).catch((error) => {
-        console.error('Upload image error:', error.response)
-        this.message = 'Could not upload the image! ' + error.response.data
-        this.currentUser.image = ''
-        this.previewImage = null
-        this.imageDialog = false
-      })
+      const imageFound = await ImageService.findImageByUserId(this.currentUser.id)
+
+      if (imageFound.data == 0) {
+        ImageService.createImage(this.formData)
+          .then(() => {
+            this.previewImage = undefined
+            this.imageDialog = false
+            this.message = 'Image Account created successfully!'
+            this.retrieveImage()
+          }
+          ).catch((error) => {
+            console.error('Create image error:', error)
+            this.message = 'Could not create the image! ' + error.response.data
+            this.previewImage = undefined
+            this.imageDialog = false
+          })
+      } else {
+        ImageService.updateImage(this.currentUser.id, this.formData)
+          .then(() => {
+            this.previewImage = null
+            this.imageDialog = false
+            this.message = 'Image Account updated successfully!'
+            this.retrieveImage()
+          }).catch((error => {
+            console.error('Could not update Image Account: ' + error)
+          }))
+      }
     },
+
+    retrieveImage() {
+      ImageService.findImageByUserId(this.currentUser.id)
+        .then((response) => {
+          if (response && response.data[0]) {
+            const bufferedData = Buffer.from(response.data[0].data, 'base64')
+            const blob = new Blob([bufferedData], { type: response.data[0].contentType })
+            this.image = URL.createObjectURL(blob)
+          } else {
+            console.log('No Image associated to this User: ID=' + this.currentUser.id)
+          }
+        }).catch((error) => {
+          console.error('Do not find image with userId:' + this.currentUser.id, error)
+        })
+    }
   }
 }
+
 </script>
 
 <style scoped>

@@ -2,7 +2,7 @@ import http from '../config/http-common'
 
 class ImageService {
 
-  create(formData) {
+  createImage(formData) {
     return http.post(`/api/images`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -10,18 +10,30 @@ class ImageService {
     })
   }
 
-  update(id, data) {
-    return http.put(`/api/images/${id}`, data)
+  updateImage(userId, formData) {
+    return http.put(`/api/images?userId=${userId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    })
+
   }
 
   getAll() {
-    return http.get(`/api/images`)
+    return http.get(`/api/images`, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    })
   }
 
-  get(id) {
-    return http.get(`/api/images/${id}`)
+  findImageByUserId(userId) {
+    return http.get(`/api/images?userId=${userId}`, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    })
   }
-
 }
 
 export default new ImageService()

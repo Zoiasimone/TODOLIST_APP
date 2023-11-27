@@ -63,7 +63,6 @@ export default {
       TasksDataService.getAll()
         .then((response) => {
           this.tasksAutocomplete = response.data.map(this.getDisplayTasks)
-          console.log(response.data)
         })
         .catch((err) => {
           console.error(err)

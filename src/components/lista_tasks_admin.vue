@@ -20,7 +20,7 @@
               <td>{{ item.lastEdit }}</td>
               <td>
                 <v-avatar class="mr-1" color="grey" size="40px">
-                  <v-img v-if="item.userAssigned.image" :src="item.userAssigned.image" size="40px" />
+                  <v-img v-if="item.image != 'NO_IMAGE'" :src="item.image" size="40px" />
                   <v-icon v-else style="color: antiquewhite;" size="40px">mdi-account-circle</v-icon>
                 </v-avatar>
                 <strong>{{ item.userAssigned.username }}</strong>
@@ -151,6 +151,8 @@
 <script>
 import TasksDataService from '../services/task.service'
 import UserService from '../services/user.service'
+import ImageService from '../services/image.service'
+import { Buffer } from 'buffer'
 
 export default {
   name: "lista_tasks_admin",
@@ -162,6 +164,7 @@ export default {
         id: '',
         username: '',
         email: '',
+        password: '',
         image: ''
       },
       title: '',
@@ -173,7 +176,6 @@ export default {
       dialogItemId: null,
       selectedTaskDetails: null,
       detailsDialog: false,
-      isDropdownOpen: false,
       headers: [
         { text: "Title", value: "title", sortable: false, align: "start" },
         { text: "Note", value: "note", sortable: false },
@@ -187,11 +189,9 @@ export default {
         note: '',
         creationDate: '',
         lastEdit: '',
-        userAssigned: {
-          username: '',
-          image: ''
-        }
-      }
+        userAssigned: []
+      },
+      imageUser: null
     }
   },
   methods: {
@@ -205,31 +205,64 @@ export default {
           tasks.map(async (task) => {
             const userAssigned = await this.getUserAssigned(task.users[0])
 
+            if (userAssigned.image != 'NO_IMAGE') {
+              this.imageUser = await ImageService.get(userAssigned.image)
+                .then(response => {
+                  if (response && response.data && response.data.data) {
+                    const bufferedData = Buffer.from(response.data.data, 'base64')
+                    const blob = new Blob([bufferedData], { type: response.data.contentType })
+                    return URL.createObjectURL(blob)
+                  } else {
+                    console.error('No data found')
+                  }
+                }).catch((error) => {
+                  console.error('Do not find image with id:' + this.currentUser.image, error)
+                })
+            } else {
+              this.imageUser = ''
+            }
+
             return {
               id: task.id,
               title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
               note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
               creationDate: task.creationDate,
               lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit,
-              userAssigned: userAssigned
+              userAssigned: userAssigned,
+              image: this.imageUser
             }
           })
         )
         this.tasks = tasksWithUserAssigned
-      } catch (err) {
-        console.error(err)
+      } catch (error) {
+        console.error(error)
       }
     },
 
     // assegna ogni task recuperato dal DB a un oggetto task dell'array
     getDisplayTasks(task) {
+      const userDisplayed = this.getUserAssigned(task.users[0])
+      const imageUser = ImageService.get(this.userDisplayed.image)
+        .then(response => {
+          if (response && response.data && response.data.data) {
+            const bufferedData = Buffer.from(response.data.data, 'base64')
+            const blob = new Blob([bufferedData], { type: response.data.contentType })
+            this.imageUser = URL.createObjectURL(blob)
+          } else {
+            console.error('No data found')
+          }
+        }).catch((error) => {
+          console.error('Do not find image with id:' + this.currentUser.image, error)
+        })
+
       return {
         id: task.id,
         title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
         note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
         creationDate: task.creationDate,
         lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit,
-        userAssigned: this.getUserAssigned(task.users[0])
+        userAssigned: userDisplayed,
+        image: imageUser
       }
     },
 
@@ -314,7 +347,7 @@ export default {
     // mostra il dialog corrispondente al button selezionato (update)
     async showEditDialog(id) {
       this.dialogItemId = id
-      this.currentTask = this.getTask(this.dialogItemId)
+      await this.getTask(this.dialogItemId)
       await this.getAllUsers()
       this.editDialog = true
     },
@@ -328,7 +361,7 @@ export default {
     // mostra il dialog corrispondente alla task selezionata (details)
     showDetailsDialog(id) {
       this.dialogItemId = id
-      this.currentTask = this.getTask(this.dialogItemId)
+      this.getTask(this.dialogItemId)
       this.detailsDialog = true
     },
 
@@ -356,11 +389,7 @@ export default {
       const date = new Date()
       this.currentTask.lastEdit = date.toLocaleString('it-IT', { timeZone: 'CET' })
       console.log(this.currentTask)
-      UserService.findByUsername(this.currentTask.userAssigned)
-        .then(response => {
-          console.log(response.data)
-        })
-      this.currentTask.users[0] = this.currentTask.userAssigned.id
+
       TasksDataService.update(this.currentTask.id, this.currentTask)
         .then(() => {
           this.successful = true
@@ -368,8 +397,8 @@ export default {
           this.refreshList()
           this.resetDeleteStatus()
         })
-        .catch((e) => {
-          console.error(e)
+        .catch(error => {
+          console.error('Could not update Task: ' + error)
         })
     },
 

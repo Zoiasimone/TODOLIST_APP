@@ -1,17 +1,21 @@
 const db = require("../models")
-const Image = db.image
-
+const mongoose = require('mongoose')
+const Images = db.images
 
 exports.createImage = async (req, res) => {
 
   // Create an Image
   if (req.body && req.file) {
 
-    const image = new Image({
+    const { originalname, buffer, mimetype } = req.file
+    const userId = req.body.userId
+
+    const image = new Images({
       id: req.body.id,
-      name: req.file.originalname,
-      data: req.file.buffer,
-      contentType: req.file.mimetype,
+      name: originalname,
+      data: buffer,
+      contentType: mimetype,
+      userId: userId
     })
 
     // Save Image in the database
@@ -30,30 +34,40 @@ exports.createImage = async (req, res) => {
   }
 }
 
-exports.updateImage = (req, res) => {
-  //update Image with the image created
-  const id = req.params.id
+//update Image with the image created
+exports.updateImage = async (req, res) => {
+  const userId = req.body.userId
 
-  Image.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
+  // Cerca l'immagine basata sul userId
+  const existingImage = await Images.findOne({ userId: mongoose.Types.ObjectId(userId) })
+
+  if (!existingImage) {
+    return res.status(404).send({
+      message: "Image not found for the specified user ID.",
+    })
+  }
+
+  existingImage.name = req.file.originalname
+  existingImage.data = req.file.buffer
+  existingImage.contentType = req.file.mimetype
+
+  await existingImage.save()
     .then(data => {
-      if (!data) {
-        res.status(404).send({
-          message: `Cannot update Image with id:${id}. Maybe Image was not found!`
-        })
-      } else res.send({ message: "Image was updated successfully." })
+      res.send(data)
     })
     .catch(err => {
       res.status(500).send({
-        message: err.message || "Error updating Image with id: " + id
+        message:
+          err.message || "Some error occurred while updating the Image."
       })
     })
 }
 
-exports.findAll = (req, res) => {
+exports.findAll = async (req, res) => {
   const id = req.query.id
   var condition = id ? { id: { $regex: new RegExp(id), $options: "i" } } : {}
 
-  Image.find(condition)
+  await Images.find(condition)
     .then(data => {
       res.send(data)
     })
@@ -65,23 +79,17 @@ exports.findAll = (req, res) => {
     })
 }
 
-// Find a single Image with an id
-exports.findOne = (req, res) => {
-  const id = req.params.id
+exports.findByUserId = async (req, res) => {
+  const userId = req.params.userId
 
-  Image.findById(id)
-    .then(data => {
-      if (!data) {
-        res.status(404).send({ message: "Not found Image with id: " + id })
-      }
-      else {
-        res.send(data)
-      }
+  // Cerca l'immagine basata sul userId
+  const existingImage = await Images.findOne({ userId: mongoose.Types.ObjectId(userId) })
+
+  if (!existingImage) {
+    return res.status(404).send({
+      message: "Image not found for the specified user ID.",
     })
-    .catch(err => {
-      res
-        .status(500)
-        .send({ message: err.message || "Error retrieving Image with id: " + id })
-    })
+  } else {
+    return res.send(existingImage.data)
+  }
 }
-

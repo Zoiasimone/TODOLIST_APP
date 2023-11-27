@@ -6,7 +6,7 @@ import lista_tasks_admin from "./components/lista_tasks_admin"
 import login_user from "./components/login_user"
 import register_user from "./components/register_user"
 
-Vue.use(Router);
+Vue.use(Router)
 
 export default new Router({
   mode: "history",
@@ -47,5 +47,5 @@ export default new Router({
       component: () => import('./components/profile_user')
     }
   ]
-});
+})
 
