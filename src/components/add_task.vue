@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import TasksDataService from '../services/task.service'
+import TasksService from '../services/task.service'
 
 export default {
   name: "add_task",
@@ -67,7 +67,7 @@ export default {
         users: this.task.users[0]
       }
 
-      TasksDataService.create(data)
+      TasksService.create(data)
         .then((response) => {
           this.task.id = response.data.id
           console.log(response.data)

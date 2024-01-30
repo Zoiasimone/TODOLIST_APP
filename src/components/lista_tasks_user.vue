@@ -46,7 +46,7 @@
 </template>
 
 <script>
-import TasksDataService from '../services/task.service'
+import TasksService from '../services/task.service'
 import UserService from '../services/user.service'
 
 
@@ -80,7 +80,7 @@ export default {
     // recupero delle tasks dal DB e asseganzione all'array che verrà mostrato nella tabella
     async retrieveTasks() {
       try {
-        const response = await TasksDataService.getAll()
+        const response = await TasksService.getAll()
         const tasks = response.data
 
         const tasksWithUserAssigned = await Promise.all(
@@ -110,7 +110,7 @@ export default {
 
     // ricerca task che coincidono con title selezionato
     searchAndRefreshList(title) {
-      TasksDataService.findByTitle(title)
+      TasksService.findByTitle(title)
         .then((response) => {
           if (title) {
             this.tasks = response.data.map(this.getDisplayTasks)

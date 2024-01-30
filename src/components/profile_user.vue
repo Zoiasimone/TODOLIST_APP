@@ -76,10 +76,9 @@ export default {
     return {
       imageDialog: false,
       previewImage: null,
-      message: null,
+      message: '',
       image: null,
-      formData: new FormData(),
-      acceptedType: ['image/png', 'image/jpeg', 'image/bmp']
+      formData: new FormData()
     }
   },
   computed: {
@@ -109,16 +108,11 @@ export default {
 
     //seleziona l'immagine da impostare
     selectImage(image) {
-      if (this.acceptedType.includes(image.type)) {
-        this.previewImage = URL.createObjectURL(image)
-        this.formData = new FormData()
-        this.formData.append('image', image)
-        this.formData.append('userId', this.currentUser.id)
-        this.message = ''
-      } else {
-        this.imageDialog = false
-        this.message = 'Image type is not valid, use a valid type(.png, .jpeg, .bmp)'
-      }
+      this.previewImage = URL.createObjectURL(image)
+      this.formData = new FormData()
+      this.formData.append('image', image)
+      this.formData.append('userId', this.currentUser.id)
+      this.message = ''
     },
 
     //salva l'immagine nel db in base allo user loggato
@@ -134,7 +128,7 @@ export default {
       if (imageFound.data == 0) {
         ImageService.createImage(this.formData)
           .then(() => {
-            this.previewImage = undefined
+            this.previewImage = null
             this.imageDialog = false
             this.message = 'Image Account created successfully!'
             this.retrieveImage()

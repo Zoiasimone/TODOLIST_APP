@@ -20,10 +20,10 @@
               <td>{{ item.lastEdit }}</td>
               <td>
                 <v-avatar class="mr-1" color="grey" size="40px">
-                  <v-img v-if="item.image != 'NO_IMAGE'" :src="item.image" size="40px" />
+                  <v-img v-if="item.image" :src="item.image" size="40px" />
                   <v-icon v-else style="color: antiquewhite;" size="40px">mdi-account-circle</v-icon>
                 </v-avatar>
-                <strong>{{ item.userAssigned.username }}</strong>
+                <strong>{{ item.username }}</strong>
               </td>
               <td>
                 <v-icon large class="mr-3" color="warning"
@@ -76,12 +76,12 @@
                 </div>
 
                 <div>
-                  <v-select v-model="currentTask.userAssigned" :items="usersEdit" item-text="username" item-value="id"
-                    label="Assigned To">
+                  <v-select v-model="selectedUser" :items="usersEdit" label="Assigned To"
+                    @change="changeAssignedUser(selectedUser)">
                     <template v-slot:selection="{ item }">
-                      <v-avatar class="mr-1" size="24px">
-                        <v-img v-if="item.image" :src="item.image" size="24px" />
-                        <v-icon v-else>mdi-account-circle</v-icon>
+                      <v-avatar class="mr-1" color="grey" size="40px">
+                        <v-img v-if="item.image" :src="item.image" size="40px" />
+                        <v-icon v-else style="color: antiquewhite;" size="40px">mdi-account-circle</v-icon>
                       </v-avatar>
                       {{ item.username }}
                     </template>
@@ -125,13 +125,10 @@
               </div>
               <div>
                 <v-avatar class="mr-1" color="grey" size="40px">
-                  <v-img v-if="currentTask.userAssigned && currentTask.userAssigned.image"
-                    :src="currentTask.userAssigned.image" size="40px" />
+                  <v-img v-if="currentTask.image" :src="currentTask.image" size="40px" />
                   <v-icon v-else style="color: antiquewhite;" size="40px">mdi-account-circle</v-icon>
                 </v-avatar>
-                <h3 v-if="currentTask.userAssigned && currentTask.userAssigned.username">
-                  <strong>{{ currentTask.userAssigned.username }}</strong>
-                </h3>
+                <strong>{{ currentTask.username }}</strong>
               </div>
             </v-card-text>
           </v-card>
@@ -149,7 +146,7 @@
 </template>
 
 <script>
-import TasksDataService from '../services/task.service'
+import TasksService from '../services/task.service'
 import UserService from '../services/user.service'
 import ImageService from '../services/image.service'
 import { Buffer } from 'buffer'
@@ -164,9 +161,23 @@ export default {
         id: '',
         username: '',
         email: '',
-        password: '',
-        image: ''
+        password: ''
       },
+      currentTask: {
+        title: '',
+        note: '',
+        creationDate: '',
+        lastEdit: '',
+        users: []
+      },
+      headers: [
+        { text: "Title", value: "title", sortable: false, align: "start" },
+        { text: "Note", value: "note", sortable: false },
+        { text: "CreationDate", value: "creationDate", sortable: false },
+        { text: "LastEdit", value: "lastEdit", sortable: false },
+        { text: "AssignedTo", value: "assignedTo", sortable: false },
+        { text: "Actions", value: "actions", sortable: false },
+      ],
       title: '',
       content: '',
       editDialog: false,
@@ -176,148 +187,65 @@ export default {
       dialogItemId: null,
       selectedTaskDetails: null,
       detailsDialog: false,
-      headers: [
-        { text: "Title", value: "title", sortable: false, align: "start" },
-        { text: "Note", value: "note", sortable: false },
-        { text: "CreationDate", value: "creationDate", sortable: false },
-        { text: "LastEdit", value: "lastEdit", sortable: false },
-        { text: "AssignedTo", value: "assignedTo", sortable: false },
-        { text: "Actions", value: "actions", sortable: false },
-      ],
-      currentTask: {
-        title: '',
-        note: '',
-        creationDate: '',
-        lastEdit: '',
-        userAssigned: []
-      },
-      imageUser: null
+      selectedUser: { image: '', username: '' }
     }
   },
   methods: {
-    // recupero delle tasks dal DB e asseganzione all'array che verrà mostrato nella tabella
-    async retrieveTasks() {
-      try {
-        const response = await TasksDataService.getAll()
-        const tasks = response.data
+    // ricerca task che coincidono con title selezionato
+    //se effettua la ricerca per titolo ritorna solo quelli che coincidono,
+    //se no ritorna tutte le tasks
+    async searchAndRefreshList(title) {
+      if (title) {
+        try {
+          const response = await TasksService.findByTitle(title)
+          const tasks = response.data
 
-        const tasksWithUserAssigned = await Promise.all(
-          tasks.map(async (task) => {
-            const userAssigned = await this.getUserAssigned(task.users[0])
+          this.tasks = await this.getDisplayTasks(tasks)
+        } catch (error) {
+          console.error(error)
+        }
+      } else {
+        try {
+          const response = await TasksService.getAll()
+          const tasks = response.data
 
-            if (userAssigned.image != 'NO_IMAGE') {
-              this.imageUser = await ImageService.get(userAssigned.image)
-                .then(response => {
-                  if (response && response.data && response.data.data) {
-                    const bufferedData = Buffer.from(response.data.data, 'base64')
-                    const blob = new Blob([bufferedData], { type: response.data.contentType })
-                    return URL.createObjectURL(blob)
-                  } else {
-                    console.error('No data found')
-                  }
-                }).catch((error) => {
-                  console.error('Do not find image with id:' + this.currentUser.image, error)
-                })
-            } else {
-              this.imageUser = ''
-            }
-
-            return {
-              id: task.id,
-              title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
-              note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
-              creationDate: task.creationDate,
-              lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit,
-              userAssigned: userAssigned,
-              image: this.imageUser
-            }
-          })
-        )
-        this.tasks = tasksWithUserAssigned
-      } catch (error) {
-        console.error(error)
+          this.tasks = await this.getDisplayTasks(tasks)
+        } catch (error) {
+          console.error(error)
+        }
       }
     },
 
     // assegna ogni task recuperato dal DB a un oggetto task dell'array
-    getDisplayTasks(task) {
-      const userDisplayed = this.getUserAssigned(task.users[0])
-      const imageUser = ImageService.get(this.userDisplayed.image)
-        .then(response => {
-          if (response && response.data && response.data.data) {
-            const bufferedData = Buffer.from(response.data.data, 'base64')
-            const blob = new Blob([bufferedData], { type: response.data.contentType })
-            this.imageUser = URL.createObjectURL(blob)
-          } else {
-            console.error('No data found')
+    getDisplayTasks(tasks) {
+      return Promise.all(
+        tasks.map(async (task) => {
+          const userAssigned = await this.getUserAssigned(task.users[0])
+          const userImage = await this.getImageByUserId(userAssigned.id)
+
+          return {
+            id: task.id,
+            title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
+            note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
+            creationDate: task.creationDate,
+            lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit,
+            username: userAssigned.username,
+            image: userImage
           }
-        }).catch((error) => {
-          console.error('Do not find image with id:' + this.currentUser.image, error)
         })
-
-      return {
-        id: task.id,
-        title: task.title.length > 40 ? task.title.substr(0, 30) + "..." : task.title,
-        note: task.note.length > 40 ? task.note.substr(0, 30) + "..." : task.note,
-        creationDate: task.creationDate,
-        lastEdit: task.lastEdit == task.creationDate ? "Not yet modified" : task.lastEdit,
-        userAssigned: userDisplayed,
-        image: imageUser
-      }
-    },
-
-    // recupero di tutti gli users dal db
-    async getAllUsers() {
-      try {
-        const response = await UserService.getAll()
-        const usersArray = response.data
-
-        const users = await Promise.all(
-          usersArray.map(async (user) => {
-            return {
-              id: user.id,
-              username: user.username,
-              email: user.email,
-              image: user.image
-            }
-          })
-        )
-        this.usersEdit = users
-      } catch (err) {
-        console.error(err)
-      }
-    },
-
-    // refresh della lista dopo qualsiasi tipo di modifica
-    refreshList() {
-      this.retrieveTasks()
+      )
     },
 
     // rimozione di tutte le task e ritorno delle variabili allo stato iniziale
     removeAllTasks() {
-      TasksDataService.deleteAll()
+      TasksService.deleteAll()
         .then(() => {
           this.successful = true
           this.message = 'All tasks removed successfully!'
-          this.refreshList()
+          this.searchAndRefreshList()
         })
-        .catch((err) => {
-          console.error(err)
-        })
-    },
-
-    // ricerca task che coincidono con title selezionato
-    searchAndRefreshList(title) {
-      TasksDataService.findByTitle(title)
-        .then((response) => {
-          if (title) {
-            this.tasks = response.data.map(this.getDisplayTasks)
-          } else {
-            this.retrieveTasks()
-          }
-        })
-        .catch((e) => {
-          console.error(e)
+        .catch((error) => {
+          console.error(error)
         })
     },
 
@@ -326,8 +254,27 @@ export default {
       try {
         const response = await UserService.get(id)
         return response.data
-      } catch (err) {
-        console.error(err)
+      } catch (error) {
+        console.error(error)
+        return {}
+      }
+    },
+
+    async getImageByUserId(id) {
+      try {
+        const response = await ImageService.findImageByUserId(id)
+
+        if (response && response.data[0]) {
+          const bufferedData = Buffer.from(response.data[0].data, 'base64')
+          const blob = new Blob([bufferedData], { type: response.data[0].contentType })
+          const imageUrl = URL.createObjectURL(blob)
+          return imageUrl
+        } else {
+          console.log('No Image associated to this User: ID=' + id)
+          return ''
+        }
+      } catch (error) {
+        console.error(error)
         return {}
       }
     },
@@ -335,20 +282,46 @@ export default {
     // recupero task per update
     async getTask(id) {
       try {
-        const response = await TasksDataService.get(id)
+        const response = await TasksService.get(id)
         this.currentTask = response.data
-        this.currentTask.userAssigned = await this.getUserAssigned(this.currentTask.users[0])
-        console.log(this.currentTask)
-      } catch (err) {
-        console.error(err)
+        const userAssigned = await this.getUserAssigned(this.currentTask.users[0])
+        this.currentTask.username = userAssigned.username
+        const image = await this.getImageByUserId(this.currentTask.users[0])
+        this.currentTask.image = image
+        return this.currentTask
+      } catch (error) {
+        console.error(error)
+      }
+    },
+
+    // recupero di tutti gli users dal db
+    async getAllUsersWithImage() {
+      try {
+        const response = await UserService.getAll()
+
+        const users = await Promise.all(
+          response.data.map(async (user) => {
+            const image = await ImageService.findImageByUserId(user.id)
+            return {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              image: image
+            }
+          })
+        )
+        return users
+      } catch (error) {
+        console.error(error)
       }
     },
 
     // mostra il dialog corrispondente al button selezionato (update)
     async showEditDialog(id) {
       this.dialogItemId = id
-      await this.getTask(this.dialogItemId)
-      await this.getAllUsers()
+      this.currentTask = await this.getTask(this.dialogItemId)
+      this.usersEdit = await this.getAllUsersWithImage()
+      this.selectedUser = { image: this.currentTask.image, username: this.currentTask.username }
       this.editDialog = true
     },
 
@@ -359,9 +332,9 @@ export default {
     },
 
     // mostra il dialog corrispondente alla task selezionata (details)
-    showDetailsDialog(id) {
+    async showDetailsDialog(id) {
       this.dialogItemId = id
-      this.getTask(this.dialogItemId)
+      this.currentTask = await this.getTask(this.dialogItemId)
       this.detailsDialog = true
     },
 
@@ -385,16 +358,19 @@ export default {
     },
 
     // update task selezionato, refresh lista dopo update e reset variabili necessarie per dialog
-    updateTask() {
+    async updateTask() {
       const date = new Date()
       this.currentTask.lastEdit = date.toLocaleString('it-IT', { timeZone: 'CET' })
-      console.log(this.currentTask)
+      this.user = await this.changeAssignedUser(this.selectedUser.username)
+      console.log('------------USER-----------\n')
+      console.log(this.user)
+      this.currentTask.users[0] = this.user.id
 
-      TasksDataService.update(this.currentTask.id, this.currentTask)
+      TasksService.update(this.currentTask.id, this.currentTask)
         .then(() => {
           this.successful = true
           this.message = "The task was updated successfully!"
-          this.refreshList()
+          this.searchAndRefreshList()
           this.resetDeleteStatus()
         })
         .catch(error => {
@@ -402,29 +378,48 @@ export default {
         })
     },
 
+    async changeAssignedUser(selectedUser) {
+      try {
+        const response = await UserService.findByUsername(selectedUser.username)
+
+        if (response && response.data && response.data.length > 0) {
+          const userFound = response.data[0]
+          console.log('USERFOUND\n')
+          console.log(userFound)
+          return userFound
+        } else {
+          // Handle the case where no user is found
+          console.error('No user found with the specified username.')
+        }
+      } catch (error) {
+        console.error('Error while fetching user by username:', error)
+      }
+    },
+
     // delete task selezionato, refresh lista dopo delete e reset variabili necessarie per dialog
     confirmDelete() {
       if (this.dialogItemId != null) {
-        TasksDataService.delete(this.dialogItemId)
+        TasksService.delete(this.dialogItemId)
           .then(() => {
             this.successful = true
             this.message = 'The task was deleted successfully!'
-            this.refreshList()
+            this.searchAndRefreshList()
             this.resetDeleteStatus()
           })
-          .catch((err) => {
-            console.error(err)
+          .catch((error) => {
+            console.error(error)
             this.resetDeleteStatus()
           })
       } else {
         console.error('Id non valido')
       }
     }
-  },
+  }
+  ,
   mounted() {
     UserService.getPublicContent().then(
       () => {
-        this.retrieveTasks()
+        this.searchAndRefreshList()
       },
       error => {
         console.error(

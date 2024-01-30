@@ -19,5 +19,5 @@ schema.method("toJSON", function () {
   return object
 })
 
-const Tasks = mongoose.model("Tasks", schema)
-module.exports = Tasks
+const Task = mongoose.model("Task", schema)
+module.exports = Task

@@ -1,6 +1,6 @@
 import http from "../config/http-common"
 
-class TasksDataService {
+class TasksService {
   getAll() {
     return http.get("/api/tasks")
   }
@@ -30,4 +30,4 @@ class TasksDataService {
   }
 }
 
-export default new TasksDataService()
+export default new TasksService()

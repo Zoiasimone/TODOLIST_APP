@@ -41,7 +41,7 @@
 
 <script>
 import UserService from '../services/user.service'
-import TasksDataService from '../services/task.service'
+import TasksService from '../services/task.service'
 
 export default {
   name: 'header_tasks',
@@ -60,7 +60,7 @@ export default {
 
     //recupera le tasks dal DB e le assegna all'array che verrà mostrato nella tabella
     retrieveTasks() {
-      TasksDataService.getAll()
+      TasksService.getAll()
         .then((response) => {
           this.tasksAutocomplete = response.data.map(this.getDisplayTasks)
         })

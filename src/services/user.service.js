@@ -2,6 +2,7 @@ import AuthHeader from './auth-header'
 import http from '../config/http-common'
 
 class UserService {
+
   getPublicContent() {
     return http.get('/api/tasks', { headers: AuthHeader.authHeader() })
   }
@@ -18,6 +19,9 @@ class UserService {
     return http.get("/api/users")
   }
 
+  findByUsername(username) {
+    return http.get(`/api/users?username=${username}`)
+  }
 }
 
 export default new UserService()

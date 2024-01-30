@@ -1,4 +1,4 @@
-import Vue from "vue";
+import Vue from "vue"
 import Router from "vue-router"
 import header_tasks from "./components/header_tasks"
 import lista_tasks_user from "./components/lista_tasks_user"

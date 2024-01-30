@@ -2,7 +2,7 @@ const db = require("../models")
 const Task = db.tasks
 
 // Create and Save a new Task
-exports.create = (req, res) => {
+exports.createTask = (req, res) => {
   // Validate request
   if (!req.body.title) {
     res.status(400).send({ message: "Content can not be empty!" })
@@ -34,7 +34,7 @@ exports.create = (req, res) => {
 }
 
 // Retrieve all Tasks from the database.
-exports.findAll = (req, res) => {
+exports.findAllTasks = (req, res) => {
   const title = req.query.title
   var condition = title ? { title: { $regex: new RegExp(title), $options: "i" } } : {}
 
@@ -51,7 +51,7 @@ exports.findAll = (req, res) => {
 }
 
 // Find a single Task with an id
-exports.findOne = (req, res) => {
+exports.findOneTask = (req, res) => {
   const id = req.params.id
 
   Task.findById(id)
@@ -68,32 +68,43 @@ exports.findOne = (req, res) => {
 }
 
 // Update a Task by the id in the request
-exports.update = (req, res) => {
-  if (!req.body) {
-    return res.status(400).send({
-      message: "Data to update can not be empty!"
+exports.updateTask = async (req, res) => {
+  const id = req.body.id
+
+  // Cerca l'immagine basata sul userId
+  const existingTask = await Task.findById(id)
+  console.log('---------------DATI PER UPDATE---------------')
+  console.log(req.body)
+  console.log('---------------TASK SU CUI FARE L\'UPDATE---------------')
+  console.log(existingTask)
+
+
+  if (!existingTask) {
+    return res.status(404).send({
+      message: "Image not found for the specified user ID.",
     })
   }
 
-  const id = req.params.id
+  existingTask.title = req.body.title
+  existingTask.note = req.body.note
+  existingTask.creationDate = req.body.creationDate
+  existingTask.lastEdit = req.body.lastEdit
+  existingTask.users[0] = req.body.users[0]
 
-  Task.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
+  await existingTask.save()
     .then(data => {
-      if (!data) {
-        res.status(404).send({
-          message: `Cannot update Task with id:${id}. Maybe Task was not found!`
-        })
-      } else res.send({ message: "Task was updated successfully." })
+      res.send(data)
     })
     .catch(err => {
       res.status(500).send({
-        message: err.message || "Error updating Task with id: " + id
+        message:
+          err.message || "Some error occurred while updating the Image."
       })
     })
 }
 
 // Delete a Task with the specified id in the request
-exports.delete = (req, res) => {
+exports.deleteTask = (req, res) => {
   const id = req.params.id
 
   Task.findByIdAndRemove(id)
@@ -116,7 +127,7 @@ exports.delete = (req, res) => {
 }
 
 // Delete all Task from the database.
-exports.deleteAll = (req, res) => {
+exports.deleteAllTasks = (req, res) => {
   Task.deleteMany({})
     .then(data => {
       res.send({
